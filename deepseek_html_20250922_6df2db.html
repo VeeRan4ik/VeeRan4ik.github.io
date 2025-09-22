@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NFT Trade Bot</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; background: #2481cc; color: white; }
+        .form-group { margin: 15px 0; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎁 NFT Trade Bot</h2>
+        <div id="mainMenu">
+            <button class="btn" onclick="showCreateForm()">Создать предложение</button>
+            <button class="btn" onclick="showTrades()">Активные сделки</button>
+            <button class="btn" onclick="showBalance()">Мой баланс</button>
+        </div>
+        
+        <div id="createForm" style="display:none;">
+            <h3>Создать NFT предложение</h3>
+            <div class="form-group">
+                <input type="text" id="nftName" placeholder="Название NFT">
+            </div>
+            <div class="form-group">
+                <textarea id="nftDesc" placeholder="Описание"></textarea>
+            </div>
+            <div class="form-group">
+                <input type="number" id="nftPrice" placeholder="Цена в ETH" step="0.001">
+            </div>
+            <button class="btn" onclick="createTrade()">Создать</button>
+            <button class="btn" onclick="showMainMenu()">Назад</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.MainButton.setText("Главное меню").onClick(showMainMenu).show();
+
+        function showMainMenu() {
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('createForm').style.display = 'none';
+        }
+
+        function showCreateForm() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('createForm').style.display = 'block';
+        }
+
+        function createTrade() {
+            const tradeData = {
+                type: 'create_trade',
+                nft_name: document.getElementById('nftName').value,
+                nft_description: document.getElementById('nftDesc').value,
+                price: parseFloat(document.getElementById('nftPrice').value)
+            };
+            
+            tg.sendData(JSON.stringify(tradeData));
+            tg.close();
+        }
+    </script>
+</body>
+</html>

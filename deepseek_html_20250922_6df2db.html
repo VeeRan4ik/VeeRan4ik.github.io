@@ -6,158 +6,637 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 400px; margin: 0 auto; }
-        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; background: #2481cc; color: white; cursor: pointer; }
-        .btn-wallet { background: #0088cc; }
-        .btn-success { background: #28a745; }
-        .btn-danger { background: #dc3545; }
-        .btn-secondary { background: #6c757d; }
-        .form-group { margin: 15px 0; }
-        input, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .section { display: none; background: white; padding: 20px; border-radius: 10px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .wallet-info { background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .wallet-address { font-family: monospace; word-break: break-all; }
-        .balance { font-size: 24px; font-weight: bold; color: #0088cc; text-align: center; margin: 10px 0; }
-        .wallet-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .wallet-item { padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.3s; }
-        .wallet-item:hover { border-color: #2481cc; background: #f0f8ff; }
-        .wallet-icon { font-size: 24px; margin-bottom: 5px; }
-        .back-btn { background: #6c757d; }
-        .hidden { display: none; }
-        .status-connected { color: #28a745; font-weight: bold; }
-        .status-disconnected { color: #dc3545; font-weight: bold; }
+        :root {
+            --primary: #6366F1;
+            --primary-dark: #4F46E5;
+            --secondary: #8B5CF6;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --light: #F8FAFC;
+            --dark: #1E293B;
+            --gray: #64748B;
+            --gray-light: #E2E8F0;
+            --border-radius: 16px;
+            --border-radius-sm: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --gradient-primary: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            --gradient-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            --gradient-warning: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .app-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        
+        .app-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #E0E7FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .app-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 8px 0;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--gradient-warning);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--dark);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin: 20px 0;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--border-radius-sm);
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .wallet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .wallet-item {
+            background: white;
+            padding: 20px 12px;
+            border-radius: var(--border-radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .wallet-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .wallet-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .wallet-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--dark);
+        }
+        
+        .balance-display {
+            text-align: center;
+            padding: 30px 20px;
+            background: var(--gradient-primary);
+            border-radius: var(--border-radius);
+            color: white;
+            margin: 20px 0;
+        }
+        
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .balance-label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .wallet-info {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: between;
+            margin: 12px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--gray);
+            min-width: 80px;
+        }
+        
+        .info-value {
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 16px 24px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-hover);
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            margin: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align: center; color: #2481cc;">🎁 NFT Trade Bot</h2>
-        
         <!-- Главное меню -->
         <div id="mainMenu" class="section active">
-            <button class="btn" onclick="showSection('createForm')">🎁 Создать предложение</button>
-            <button class="btn" onclick="showSection('tradesList')">📋 Активные сделки</button>
-            <button class="btn btn-wallet" onclick="showWalletSection()">👛 Мой кошелек</button>
-            <button class="btn" onclick="showSection('balanceSection')">💎 Баланс</button>
+            <div class="app-header">
+                <h1 class="app-title">🎁 NFT Trade Bot</h1>
+                <p class="app-subtitle">Торговля NFT в сети TON</p>
+            </div>
+            
+            <div class="card">
+                <button class="btn btn-primary" onclick="showSection('createForm')">
+                    <span class="btn-icon">🎨</span>
+                    Создать предложение
+                </button>
+                
+                <button class="btn btn-success" onclick="showSection('tradesList')">
+                    <span class="btn-icon">📋</span>
+                    Активные сделки
+                </button>
+                
+                <button class="btn btn-warning" onclick="showWalletSection()">
+                    <span class="btn-icon">👛</span>
+                    Мой кошелек
+                </button>
+                
+                <button class="btn btn-secondary" onclick="showSection('balanceSection')">
+                    <span class="btn-icon">💎</span>
+                    Баланс TON
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 16px; color: var(--dark);">🚀 Быстрый старт</h3>
+                <div class="feature-card">
+                    <div class="feature-icon">👛</div>
+                    <h4>Подключите кошелек</h4>
+                    <p style="font-size: 14px; opacity: 0.8;">Начните с подключения TON кошелька</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h4>Создайте NFT</h4>
+                    <p style="font-size: 14px; opacity: 0.8;">Разместите свое предложение на продажу</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h4>Начните торговать</h4>
+                    <p style="font-size: 14px; opacity: 0.8;">Покупайте и продавайте NFT</p>
+                </div>
+            </div>
         </div>
         
         <!-- Создание предложения -->
         <div id="createForm" class="section">
-            <h3>🎁 Создать NFT предложение</h3>
-            <div class="form-group">
-                <input type="text" id="nftName" placeholder="Название NFT" required>
+            <div class="app-header">
+                <h1 class="app-title">🎨 Создать NFT</h1>
+                <p class="app-subtitle">Разместите свое предложение</p>
             </div>
-            <div class="form-group">
-                <textarea id="nftDesc" placeholder="Описание NFT" rows="3"></textarea>
+            
+            <div class="card">
+                <div class="form-group">
+                    <label class="form-label">Название NFT</label>
+                    <input type="text" id="nftName" class="form-input" placeholder="Введите название..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea id="nftDesc" class="form-input" placeholder="Опишите ваш NFT..." rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Цена в TON</label>
+                    <input type="number" id="nftPrice" class="form-input" placeholder="0.00" step="0.001" min="0.001" required>
+                </div>
+                
+                <button class="btn btn-primary" onclick="createTrade()">
+                    <span class="btn-icon">✨</span>
+                    Создать предложение
+                </button>
             </div>
-            <div class="form-group">
-                <input type="number" id="nftPrice" placeholder="Цена в TON" step="0.001" min="0.001" required>
-            </div>
-            <button class="btn" onclick="createTrade()">✅ Создать предложение</button>
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 Назад</button>
+            
+            <button class="back-button" onclick="showMainMenu()">
+                ← Назад
+            </button>
         </div>
         
         <!-- Управление кошельком -->
         <div id="walletSection" class="section">
-            <h3>👛 Управление TON кошельком</h3>
+            <div class="app-header">
+                <h1 class="app-title">👛 TON Кошелек</h1>
+                <p class="app-subtitle">Управление вашим кошельком</p>
+            </div>
             
-            <div id="walletConnected" class="wallet-info hidden">
-                <h4>✅ Кошелек подключен</h4>
-                <p><strong>Адрес:</strong> <span id="walletAddress" class="wallet-address"></span></p>
-                <p><strong>Баланс:</strong> <span id="walletBalance" class="balance">0 TON</span></p>
-                <p><strong>Тип:</strong> <span id="walletType"></span></p>
-                <button class="btn btn-danger" onclick="disconnectWallet()">❌ Отключить кошелек</button>
-                <button class="btn" onclick="checkBalance()">🔄 Обновить баланс</button>
+            <div id="walletConnected" class="hidden">
+                <div class="balance-display">
+                    <div class="balance-label">Ваш баланс</div>
+                    <div class="balance-amount" id="walletBalance">0 TON</div>
+                    <div class="status-badge status-connected">Подключен</div>
+                </div>
+                
+                <div class="card">
+                    <div class="info-item">
+                        <span class="info-label">Адрес:</span>
+                        <span class="info-value wallet-address" id="walletAddress"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Тип:</span>
+                        <span class="info-value" id="walletType"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Статус:</span>
+                        <span class="info-value status-badge status-connected">Активен</span>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="checkBalance()">
+                        <span class="btn-icon">🔄</span>
+                        Обновить баланс
+                    </button>
+                    
+                    <button class="btn btn-outline" onclick="disconnectWallet()">
+                        <span class="btn-icon">🔌</span>
+                        Отключить кошелек
+                    </button>
+                </div>
             </div>
             
             <div id="walletDisconnected">
-                <h4>🔗 Подключите TON кошелек</h4>
-                <p>Выберите ваш кошелек для подключения:</p>
-                
-                <div class="wallet-list">
-                    <div class="wallet-item" onclick="connectWallet('telegram')">
-                        <div class="wallet-icon">📱</div>
-                        <div>Telegram Wallet</div>
+                <div class="card">
+                    <h3 style="margin-bottom: 16px; text-align: center;">🔗 Подключите кошелек</h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: var(--gray);">
+                        Выберите предпочитаемый кошелек
+                    </p>
+                    
+                    <div class="wallet-grid">
+                        <div class="wallet-item" onclick="connectWallet('telegram')">
+                            <span class="wallet-icon">📱</span>
+                            <div class="wallet-name">Telegram</div>
+                        </div>
+                        <div class="wallet-item" onclick="connectWallet('tonkeeper')">
+                            <span class="wallet-icon">👛</span>
+                            <div class="wallet-name">Tonkeeper</div>
+                        </div>
+                        <div class="wallet-item" onclick="connectWallet('tonhub')">
+                            <span class="wallet-icon">⚡</span>
+                            <div class="wallet-name">Tonhub</div>
+                        </div>
+                        <div class="wallet-item" onclick="connectWallet('mytonwallet')">
+                            <span class="wallet-icon">💎</span>
+                            <div class="wallet-name">MyTonWallet</div>
+                        </div>
                     </div>
-                    <div class="wallet-item" onclick="connectWallet('tonkeeper')">
-                        <div class="wallet-icon">👛</div>
-                        <div>Tonkeeper</div>
-                    </div>
-                    <div class="wallet-item" onclick="connectWallet('tonhub')">
-                        <div class="wallet-icon">⚡</div>
-                        <div>Tonhub</div>
-                    </div>
-                    <div class="wallet-item" onclick="connectWallet('mytonwallet')">
-                        <div class="wallet-icon">💎</div>
-                        <div>MyTonWallet</div>
-                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="connectWallet('tonconnect')">
+                        <span class="btn-icon">🔗</span>
+                        Другие кошельки (TonConnect)
+                    </button>
                 </div>
                 
-                <div class="form-group">
-                    <button class="btn" onclick="connectWallet('tonconnect')">🔗 TonConnect (все кошельки)</button>
-                </div>
-                
-                <div class="wallet-info">
-                    <h5>📋 Инструкция:</h5>
-                    <ol>
-                        <li>Выберите ваш кошелек</li>
-                        <li>Подтвердите подключение в приложении</li>
-                        <li>Готово! Можно торговать NFT</li>
+                <div class="card">
+                    <h4 style="margin-bottom: 12px;">📋 Как подключить</h4>
+                    <ol style="padding-left: 20px; color: var(--gray);">
+                        <li style="margin-bottom: 8px;">Выберите ваш кошелек из списка</li>
+                        <li style="margin-bottom: 8px;">Подтвердите подключение в приложении</li>
+                        <li>Готово! Можно начинать торговлю</li>
                     </ol>
                 </div>
             </div>
             
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 Назад</button>
+            <button class="back-button" onclick="showMainMenu()">
+                ← Назад
+            </button>
         </div>
         
         <!-- Баланс -->
         <div id="balanceSection" class="section">
-            <h3>💎 Баланс TON</h3>
-            <div id="balanceInfo">
-                <p>Подключите кошелек чтобы увидеть баланс</p>
+            <div class="app-header">
+                <h1 class="app-title">💎 Баланс</h1>
+                <p class="app-subtitle">Ваш баланс TON</p>
             </div>
-            <button class="btn" onclick="showWalletSection()">👛 Управление кошельком</button>
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 Назад</button>
+            
+            <div id="balanceInfo">
+                <div class="card" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">👛</div>
+                    <h3 style="margin-bottom: 12px;">Кошелек не подключен</h3>
+                    <p style="color: var(--gray); margin-bottom: 24px;">
+                        Подключите TON кошелек чтобы увидеть баланс
+                    </p>
+                    <button class="btn btn-primary" onclick="showWalletSection()">
+                        <span class="btn-icon">🔗</span>
+                        Подключить кошелек
+                    </button>
+                </div>
+            </div>
+            
+            <button class="back-button" onclick="showMainMenu()">
+                ← Назад
+            </button>
         </div>
         
         <!-- Список сделок -->
         <div id="tradesList" class="section">
-            <h3>📋 Активные сделки</h3>
-            <div id="tradesContainer">
-                <p>Загрузка активных сделок...</p>
+            <div class="app-header">
+                <h1 class="app-title">📋 Сделки</h1>
+                <p class="app-subtitle">Активные предложения</p>
             </div>
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 Назад</button>
+            
+            <div class="card">
+                <div id="tradesContainer" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                    <h3 style="margin-bottom: 8px;">Загрузка...</h3>
+                    <p style="color: var(--gray);">Получаем список активных сделок</p>
+                </div>
+            </div>
+            
+            <button class="back-button" onclick="showMainMenu()">
+                ← Назад
+            </button>
         </div>
     </div>
 
     <script>
         // Инициализация Telegram Web App
         let tg = window.Telegram.WebApp;
-        let tonConnect = null;
         let currentWallet = null;
         
         // Инициализация приложения
         tg.expand();
         tg.MainButton.setText("Главное меню").onClick(showMainMenu).show();
+        tg.setHeaderColor('#6366F1');
+        tg.setBackgroundColor('#6366F1');
         
         // Загрузка состояния кошелька при запуске
         document.addEventListener('DOMContentLoaded', function() {
             loadWalletState();
             checkUrlParameters();
+            showNotification('Добро пожаловать в NFT Trade Bot!', 'success');
         });
+        
+        // Функция показа уведомлений
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.background = type === 'success' ? 'var(--success)' : 
+                                           type === 'error' ? 'var(--danger)' : 'var(--primary)';
+            notification.style.color = 'white';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
         
         // Проверка параметров URL для автоматического перехода
         function checkUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             const action = urlParams.get('action');
             
-            if (action === 'connect_wallet') {
+            if (action === 'connect') {
                 showWalletSection();
-            } else if (action === 'send_ton') {
-                showSendTonSection();
-            } else if (action === 'receive_ton') {
-                showReceiveTonSection();
+            } else if (action === 'send') {
+                // В будущем можно добавить раздел отправки
             }
         }
         
@@ -206,29 +685,52 @@
                 document.getElementById('walletAddress').textContent = 
                     currentWallet.address.substring(0, 8) + '...' + currentWallet.address.substring(currentWallet.address.length - 6);
                 document.getElementById('walletBalance').textContent = (currentWallet.balance || 0) + ' TON';
-                document.getElementById('walletType').textContent = currentWallet.type || 'Unknown';
+                document.getElementById('walletType').textContent = currentWallet.name || 'Unknown';
+                
+                // Обновляем баланс в разделе баланса
+                const balanceInfo = document.getElementById('balanceInfo');
+                balanceInfo.innerHTML = `
+                    <div class="balance-display">
+                        <div class="balance-label">Ваш баланс</div>
+                        <div class="balance-amount">${currentWallet.balance} TON</div>
+                        <div class="status-badge status-connected">Активен</div>
+                    </div>
+                    <div class="card">
+                        <div class="info-item">
+                            <span class="info-label">Адрес:</span>
+                            <span class="info-value">${currentWallet.address.substring(0, 8)}...${currentWallet.address.substring(currentWallet.address.length - 6)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Тип:</span>
+                            <span class="info-value">${currentWallet.name}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Статус:</span>
+                            <span class="info-value status-badge status-connected">Подключен</span>
+                        </div>
+                    </div>
+                `;
             } else {
                 connectedDiv.classList.add('hidden');
                 disconnectedDiv.style.display = 'block';
             }
         }
         
-        // Подключение кошелька (симуляция - в реальном приложении используйте TonConnect)
+        // Подключение кошелька
         function connectWallet(walletType) {
-            // В демо-режиме создаем тестовый кошелек
-            const demoWallets = {
-                'telegram': { name: 'Telegram Wallet', type: 'telegram' },
-                'tonkeeper': { name: 'Tonkeeper', type: 'tonkeeper' },
-                'tonhub': { name: 'Tonhub', type: 'tonhub' },
-                'mytonwallet': { name: 'MyTonWallet', type: 'mytonwallet' },
-                'tonconnect': { name: 'TonConnect', type: 'tonconnect' }
+            const walletNames = {
+                'telegram': { name: 'Telegram Wallet', icon: '📱' },
+                'tonkeeper': { name: 'Tonkeeper', icon: '👛' },
+                'tonhub': { name: 'Tonhub', icon: '⚡' },
+                'mytonwallet': { name: 'MyTonWallet', icon: '💎' },
+                'tonconnect': { name: 'TonConnect', icon: '🔗' }
             };
             
-            const walletInfo = demoWallets[walletType] || { name: 'Unknown', type: 'other' };
+            const walletInfo = walletNames[walletType] || { name: 'Unknown Wallet', icon: '👛' };
             
             // Генерируем демо-адрес кошелька
             const demoAddress = 'EQ' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            const demoBalance = (Math.random() * 100).toFixed(3);
+            const demoBalance = (Math.random() * 50 + 10).toFixed(3);
             
             currentWallet = {
                 address: demoAddress,
@@ -251,11 +753,7 @@
                 proof: 'demo_proof_' + Date.now()
             };
             
-            tg.showPopup({
-                title: '✅ Кошелек подключен',
-                message: `Кошелек ${walletInfo.name} успешно подключен!\nБаланс: ${demoBalance} TON`,
-                buttons: [{ type: 'ok' }]
-            });
+            showNotification(`✅ Кошелек ${walletInfo.name} подключен!`, 'success');
             
             // tg.sendData(JSON.stringify(walletData));
         }
@@ -290,11 +788,7 @@
                     
                     // tg.sendData(JSON.stringify(disconnectData));
                     
-                    tg.showPopup({
-                        title: '✅ Кошелек отключен',
-                        message: 'Кошелек успешно отключен',
-                        buttons: [{ type: 'ok' }]
-                    });
+                    showNotification('🔌 Кошелек отключен', 'info');
                 }
             });
         }
@@ -309,11 +803,7 @@
             saveWalletState();
             updateWalletDisplay();
             
-            tg.showPopup({
-                title: '🔄 Баланс обновлен',
-                message: `Текущий баланс: ${currentWallet.balance} TON`,
-                buttons: [{ type: 'ok' }]
-            });
+            showNotification(`🔄 Баланс обновлен: ${currentWallet.balance} TON`, 'success');
         }
         
         // Создание сделки
@@ -323,17 +813,13 @@
             const nftPrice = document.getElementById('nftPrice').value;
             
             if (!nftName || !nftPrice) {
-                tg.showPopup({
-                    title: '❌ Ошибка',
-                    message: 'Заполните название и цену NFT',
-                    buttons: [{ type: 'ok' }]
-                });
+                showNotification('❌ Заполните название и цену NFT', 'error');
                 return;
             }
             
             if (!currentWallet) {
                 tg.showPopup({
-                    title: '❌ Кошелек не подключен',
+                    title: 'Кошелек не подключен',
                     message: 'Подключите TON кошелек для создания предложения',
                     buttons: [
                         { 
@@ -365,49 +851,14 @@
             
             tg.sendData(JSON.stringify(tradeData));
             
-            tg.showPopup({
-                title: '✅ Предложение создано',
-                message: `NFT "${nftName}" успешно создано!\nЦена: ${nftPrice} TON`,
-                buttons: [{ type: 'ok' }]
-            });
+            showNotification(`✅ NFT "${nftName}" создано за ${nftPrice} TON`, 'success');
             
             // Очищаем форму
             document.getElementById('nftName').value = '';
             document.getElementById('nftDesc').value = '';
             document.getElementById('nftPrice').value = '';
             
-            showMainMenu();
-        }
-        
-        // Показ баланса
-        function showBalance() {
-            showSection('balanceSection');
-            const balanceInfo = document.getElementById('balanceInfo');
-            
-            if (currentWallet) {
-                balanceInfo.innerHTML = `
-                    <div class="wallet-info">
-                        <h4>💎 Ваш баланс</h4>
-                        <div class="balance">${currentWallet.balance} TON</div>
-                        <p>Адрес: ${currentWallet.address.substring(0, 8)}...${currentWallet.address.substring(currentWallet.address.length - 6)}</p>
-                        <p>Кошелек: ${currentWallet.name}</p>
-                    </div>
-                `;
-            } else {
-                balanceInfo.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="font-size: 48px;">👛</div>
-                        <h4>Кошелек не подключен</h4>
-                        <p>Подключите TON кошелек чтобы увидеть баланс</p>
-                    </div>
-                `;
-            }
-        }
-        
-        // Показ списка сделок
-        function showTrades() {
-            showSection('tradesList');
-            // Здесь будет загрузка списка сделок
+            setTimeout(() => showMainMenu(), 1000);
         }
     </script>
 </body>

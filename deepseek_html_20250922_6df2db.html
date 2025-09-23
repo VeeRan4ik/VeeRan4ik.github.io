@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GiftGaurantBot - Connect TON Wallet</title>
+    <title>NFT Trade Bot - Connect TON Wallet</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -10,21 +10,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #007AFF;
-            --primary-dark: #0056CC;
-            --success: #34C759;
-            --danger: #FF3B30;
-            --warning: #FF9500;
-            --info: #5AC8FA;
-            --light: #F2F2F7;
-            --dark: #1C1C1E;
-            --gray: #8E8E93;
+            --tg-bg: #0f0f0f;
+            --tg-secondary-bg: #1c1c1c;
+            --tg-text: #ffffff;
+            --tg-hint: #aaaaaa;
+            --tg-link: #5eabe1;
+            --tg-primary: #2ea6ff;
+            --tg-accent: #8774e1;
+            --tg-success: #34c759;
+            --tg-warning: #ff9500;
+            --tg-danger: #ff3b30;
+            --tg-border: #2a2a2a;
+            --tg-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             --border-radius: 16px;
             --border-radius-sm: 12px;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
-            --gradient-success: linear-gradient(135deg, #34C759 0%, #4CD964 100%);
-            --gradient-wallet: linear-gradient(135deg, #0088CC 0%, #00A3FF 100%);
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --gradient-primary: linear-gradient(135deg, #2ea6ff 0%, #8774e1 100%);
+            --gradient-accent: linear-gradient(135deg, #8774e1 0%, #c956e8 100%);
+            --gradient-success: linear-gradient(135deg, #34c759 0%, #4cd964 100%);
         }
         
         * {
@@ -35,10 +38,11 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--tg-bg);
+            color: var(--tg-text);
             min-height: 100vh;
-            color: var(--dark);
             line-height: 1.6;
+            overflow-x: hidden;
         }
         
         .container {
@@ -52,29 +56,71 @@
             text-align: center;
             margin-bottom: 30px;
             padding: 20px 0;
+            position: relative;
         }
         
         .app-title {
             font-size: 28px;
             font-weight: 700;
-            color: white;
             margin-bottom: 8px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .app-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.5s ease;
+        }
+        
+        .app-header:hover .app-title::after {
+            transform: scaleX(1);
+            transform-origin: left;
         }
         
         .app-subtitle {
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--tg-hint);
             font-size: 14px;
             font-weight: 400;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            background: var(--tg-secondary-bg);
             border-radius: var(--border-radius);
             padding: 24px;
             margin-bottom: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--tg-shadow);
+            border: 1px solid var(--tg-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .card:hover::before {
+            left: 100%;
         }
         
         .btn {
@@ -90,72 +136,148 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+            z-index: -1;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn-primary {
             background: var(--gradient-primary);
             color: white;
+            box-shadow: 0 4px 15px rgba(46, 166, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 166, 255, 0.4);
         }
         
         .btn-success {
             background: var(--gradient-success);
             color: white;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
         }
         
-        .btn-wallet {
-            background: var(--gradient-wallet);
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+        }
+        
+        .btn-accent {
+            background: var(--gradient-accent);
             color: white;
+            box-shadow: 0 4px 15px rgba(135, 116, 225, 0.3);
+        }
+        
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(135, 116, 225, 0.4);
         }
         
         .btn-outline {
             background: transparent;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: var(--tg-text);
+            border: 2px solid var(--tg-border);
         }
         
         .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--tg-primary);
         }
         
         .section {
             display: none;
-            animation: fadeIn 0.3s ease;
+            animation: fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            opacity: 0;
+            transform: translateY(20px);
         }
         
         .section.active {
             display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from { 
+                opacity: 0; 
+                transform: translateX(-30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         
         .form-group {
             margin: 20px 0;
+            animation: slideInLeft 0.5s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
         }
+        
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        .form-group:nth-child(4) { animation-delay: 0.4s; }
         
         .form-label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--tg-text);
         }
         
         .form-input {
             width: 100%;
             padding: 14px 16px;
-            border: 2px solid #E5E5EA;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--tg-border);
             border-radius: var(--border-radius-sm);
             font-size: 16px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
+            color: var(--tg-text);
         }
         
         .form-input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--tg-primary);
+            box-shadow: 0 0 0 3px rgba(46, 166, 255, 0.2);
         }
         
         .balance-display {
@@ -165,23 +287,26 @@
             border-radius: var(--border-radius);
             color: white;
             margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(46, 166, 255, 0.3);
+            animation: pulse 3s infinite ease-in-out;
         }
         
         .balance-amount {
             font-size: 42px;
             font-weight: 700;
             margin: 10px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         
         .wallet-info {
-            background: #F2F2F7;
+            background: rgba(0, 0, 0, 0.3);
             padding: 16px;
             border-radius: var(--border-radius-sm);
             margin: 16px 0;
             word-break: break-all;
             font-family: monospace;
             font-size: 14px;
-            border-left: 4px solid var(--primary);
+            border-left: 4px solid var(--tg-primary);
         }
         
         .feature-grid {
@@ -192,17 +317,34 @@
         }
         
         .feature-item {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             padding: 20px 12px;
             border-radius: var(--border-radius-sm);
             text-align: center;
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--tg-border);
+            transition: var(--transition);
+            animation: slideInLeft 0.5s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        .feature-item:nth-child(1) { animation-delay: 0.1s; }
+        .feature-item:nth-child(2) { animation-delay: 0.2s; }
+        .feature-item:nth-child(3) { animation-delay: 0.3s; }
+        .feature-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: var(--tg-primary);
         }
         
         .feature-icon {
             font-size: 24px;
             margin-bottom: 8px;
+            display: inline-block;
+            animation: pulse 2s infinite ease-in-out;
         }
         
         .back-button {
@@ -210,13 +352,19 @@
             align-items: center;
             gap: 8px;
             padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--tg-text);
+            border: 1px solid var(--tg-border);
             border-radius: var(--border-radius-sm);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             font-weight: 500;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--tg-primary);
+            transform: translateX(-5px);
         }
         
         .hidden {
@@ -228,17 +376,28 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: var(--tg-secondary-bg);
             padding: 16px 24px;
             border-radius: var(--border-radius-sm);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            box-shadow: var(--tg-shadow);
             z-index: 1000;
-            animation: slideDown 0.3s ease;
+            animation: slideDown 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            border: 1px solid var(--tg-border);
+            max-width: 90%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         @keyframes slideDown {
-            from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
-            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            from { 
+                transform: translateX(-50%) translateY(-100px); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(-50%) translateY(0); 
+                opacity: 1; 
+            }
         }
         
         .wallet-status {
@@ -246,38 +405,51 @@
             align-items: center;
             gap: 12px;
             padding: 16px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: var(--border-radius-sm);
             margin: 16px 0;
-            color: white;
+            color: var(--tg-text);
+            border-left: 4px solid var(--tg-danger);
+            transition: var(--transition);
         }
         
         .status-connected {
-            background: rgba(52, 199, 89, 0.2);
-            border-left: 4px solid var(--success);
+            border-left-color: var(--tg-success);
+            background: rgba(52, 199, 89, 0.1);
         }
         
         .status-disconnected {
-            background: rgba(255, 59, 48, 0.2);
-            border-left: 4px solid var(--danger);
+            border-left-color: var(--tg-danger);
+            background: rgba(255, 59, 48, 0.1);
         }
         
         .nft-card {
-            border: 2px solid #E5E5EA;
+            border: 2px solid var(--tg-border);
             border-radius: var(--border-radius-sm);
             padding: 16px;
             margin: 12px 0;
-            background: white;
+            background: var(--tg-secondary-bg);
+            transition: var(--transition);
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .nft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--tg-primary);
         }
         
         .nft-name {
             font-weight: 600;
             font-size: 18px;
             margin-bottom: 8px;
+            color: var(--tg-text);
         }
         
         .nft-price {
-            color: var(--primary);
+            color: var(--tg-primary);
             font-weight: 700;
             font-size: 20px;
         }
@@ -288,14 +460,160 @@
             gap: 12px;
             margin: 16px 0;
         }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--tg-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .floating-element {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            filter: blur(40px);
+            opacity: 0.1;
+            z-index: -1;
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        .floating-element:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: -5s;
+            background: var(--gradient-accent);
+        }
+        
+        .floating-element:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: -10s;
+            background: var(--gradient-success);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -20px) scale(1.1); }
+            50% { transform: translate(-15px, 10px) scale(0.9); }
+            75% { transform: translate(10px, 15px) scale(1.05); }
+        }
+        
+        .wallet-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius-sm);
+            margin: 10px 0;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+        
+        .wallet-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--tg-primary);
+            transform: translateX(5px);
+        }
+        
+        .wallet-option img {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+        
+        .wallet-option-info {
+            flex: 1;
+        }
+        
+        .wallet-option-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .wallet-option-desc {
+            font-size: 12px;
+            color: var(--tg-hint);
+        }
+        
+        .info-box {
+            background: rgba(46, 166, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+            border-left: 4px solid var(--tg-primary);
+        }
+        
+        .nft-image-preview {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius-sm);
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .nft-image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .app-title {
+                font-size: 24px;
+            }
+            
+            .balance-amount {
+                font-size: 36px;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    
     <div class="container">
         <!-- Главное меню -->
         <div id="mainMenu" class="section active">
             <div class="app-header">
-                <h1 class="app-title">💎 GiftGaurantBot</h1>
+                <h1 class="app-title">💎 NFT Trade Bot</h1>
                 <p class="app-subtitle">P2P сделки с TON кошельком</p>
             </div>
             
@@ -308,7 +626,7 @@
             </div>
             
             <div class="card">
-                <button class="btn btn-wallet" onclick="showSection('walletSection')">
+                <button class="btn btn-accent" onclick="showSection('walletSection')">
                     👛 Подключить кошелек
                 </button>
                 
@@ -370,29 +688,41 @@
                     </div>
                 </div>
                 
-                <div id="walletConnect" class="hidden">
+                <div id="walletConnect">
                     <div style="text-align: center; padding: 20px;">
                         <div style="font-size: 48px; margin-bottom: 16px;">👛</div>
                         <h3 style="margin-bottom: 8px;">Подключите TON кошелек</h3>
-                        <p style="color: var(--gray); margin-bottom: 20px;">
+                        <p style="color: var(--tg-hint); margin-bottom: 20px;">
                             Выберите предпочитаемый кошелек для подключения
                         </p>
                     </div>
                     
-                    <button class="btn btn-wallet" onclick="connectWallet('tonkeeper')">
-                        <img src="https://tonkeeper.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
-                        Tonkeeper
-                    </button>
+                    <div class="wallet-option" onclick="connectWallet('tonkeeper')">
+                        <img src="https://tonkeeper.com/favicon.ico" alt="Tonkeeper">
+                        <div class="wallet-option-info">
+                            <div class="wallet-option-name">Tonkeeper</div>
+                            <div class="wallet-option-desc">Популярный TON кошелек</div>
+                        </div>
+                        <div style="font-size: 24px;">→</div>
+                    </div>
                     
-                    <button class="btn btn-wallet" onclick="connectWallet('tonhub')">
-                        <img src="https://tonhub.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
-                        Tonhub
-                    </button>
+                    <div class="wallet-option" onclick="connectWallet('tonhub')">
+                        <img src="https://tonhub.com/favicon.ico" alt="Tonhub">
+                        <div class="wallet-option-info">
+                            <div class="wallet-option-name">Tonhub</div>
+                            <div class="wallet-option-desc">Простой и безопасный</div>
+                        </div>
+                        <div style="font-size: 24px;">→</div>
+                    </div>
                     
-                    <button class="btn btn-wallet" onclick="connectWallet('mytonwallet')">
-                        <img src="https://mytonwallet.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
-                        MyTonWallet
-                    </button>
+                    <div class="wallet-option" onclick="connectWallet('mytonwallet')">
+                        <img src="https://mytonwallet.com/favicon.ico" alt="MyTonWallet">
+                        <div class="wallet-option-info">
+                            <div class="wallet-option-name">MyTonWallet</div>
+                            <div class="wallet-option-desc">Универсальный кошелек</div>
+                        </div>
+                        <div style="font-size: 24px;">→</div>
+                    </div>
                 </div>
             </div>
             
@@ -421,7 +751,11 @@
                 
                 <div class="form-group">
                     <label class="form-label">Ссылка на изображение (URL):</label>
-                    <input type="url" id="nftImage" class="form-input" placeholder="https://example.com/image.jpg">
+                    <input type="url" id="nftImage" class="form-input" placeholder="https://example.com/image.jpg" onchange="previewImage()">
+                </div>
+                
+                <div id="imagePreview" class="nft-image-preview hidden">
+                    <span style="color: var(--tg-hint);">Предпросмотр изображения</span>
                 </div>
                 
                 <div class="form-group">
@@ -429,7 +763,7 @@
                     <input type="number" id="nftPrice" class="form-input" placeholder="0.1" step="0.001" min="0.1">
                 </div>
                 
-                <div id="createTradeInfo" style="background: #E8F4FD; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 14px;">
+                <div class="info-box">
                     💡 <strong>Важно:</strong> Покупатель будет переводить TON напрямую на ваш кошелек
                 </div>
                 
@@ -452,9 +786,9 @@
             
             <div class="card">
                 <div id="tradesContainer" style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                    <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
                     <h3 style="margin-bottom: 8px;">Загрузка...</h3>
-                    <p style="color: var(--gray);">Получаем список активных сделок</p>
+                    <p style="color: var(--tg-hint);">Получаем список активных сделок</p>
                 </div>
             </div>
             
@@ -474,7 +808,7 @@
                 <div id="myTradesContainer" style="text-align: center; padding: 40px 20px;">
                     <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
                     <h3 style="margin-bottom: 8px;">Ваши сделки</h3>
-                    <p style="color: var(--gray);">Здесь будет отображаться история ваших сделок</p>
+                    <p style="color: var(--tg-hint);">Здесь будет отображаться история ваших сделок</p>
                 </div>
             </div>
             
@@ -515,8 +849,8 @@
         
         tg.expand();
         tg.MainButton.setText("Главное меню").onClick(showMainMenu).show();
-        tg.setHeaderColor('#007AFF');
-        tg.setBackgroundColor('#007AFF');
+        tg.setHeaderColor('#2ea6ff');
+        tg.setBackgroundColor('#0f0f0f');
         
         // Инициализация состояния кошелька
         function initWalletState() {
@@ -587,7 +921,7 @@
         }
         
         async function connectWallet(walletType) {
-            showNotification('🔗 Подключаем кошелек...');
+            showNotification('🔗 Подключаем кошелек...', 'info');
             
             // Симуляция подключения кошелька
             setTimeout(() => {
@@ -619,7 +953,7 @@
                 updateWalletUI();
                 updateMainMenu();
                 loadWalletBalance();
-                showNotification('✅ Кошелек успешно подключен!');
+                showNotification('✅ Кошелек успешно подключен!', 'success');
                 
                 // Показываем информацию о кошельке
                 showSection('walletSection');
@@ -635,7 +969,7 @@
             return names[type] || 'TON Wallet';
         }
         
-        async function loadWalletBalance() {
+        async function loadWalletBalance() {}
             if (!isWalletConnected) return;
             
             // Симуляция загрузки баланса
@@ -649,201 +983,4 @@
             //     walletBalance = parseInt(data.result) / 1000000000; // Конвертация наноТОН в TON
             //     updateWalletUI();
             // } catch (error) {
-            //     console.error('Error loading balance:', error);
-            //     showNotification('❌ Ошибка загрузки баланса');
-            // }
-        }
-        
-        function refreshBalance() {
-            showNotification('🔄 Обновляем баланс...');
-            loadWalletBalance();
-            setTimeout(() => {
-                showNotification('✅ Баланс обновлен');
-            }, 1000);
-        }
-        
-        function disconnectWallet() {
-            userWallet = null;
-            walletBalance = 0;
-            walletAddress = '';
-            isWalletConnected = false;
-            
-            localStorage.removeItem('tonWallet');
-            
-            updateWalletUI();
-            updateMainMenu();
-            showNotification('🔗 Кошелек отключен');
-        }
-        
-        function showSection(sectionId) {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionId).classList.add('active');
-            
-            if (sectionId === 'tradesList') {
-                loadTradesList();
-            } else if (sectionId === 'myTrades') {
-                loadMyTrades();
-            }
-        }
-        
-        function showMainMenu() {
-            showSection('mainMenu');
-        }
-        
-        function createTrade() {
-            if (!isWalletConnected) {
-                showNotification('❌ Сначала подключите кошелек');
-                showSection('walletSection');
-                return;
-            }
-            
-            const name = document.getElementById('nftName').value.trim();
-            const desc = document.getElementById('nftDesc').value.trim();
-            const image = document.getElementById('nftImage').value.trim();
-            const price = parseFloat(document.getElementById('nftPrice').value);
-            
-            if (!name || !price) {
-                showNotification('❌ Заполните название и цену');
-                return;
-            }
-            
-            if (price < 0.1) {
-                showNotification('❌ Минимальная цена: 0.1 TON');
-                return;
-            }
-            
-            if (price > walletBalance) {
-                showNotification('❌ Недостаточно средств на кошельке');
-                return;
-            }
-            
-            const tradeData = {
-                type: 'create_trade',
-                nft_name: name,
-                nft_description: desc,
-                nft_image_url: image,
-                price: price,
-                wallet_address: walletAddress
-            };
-            
-            tg.sendData(JSON.stringify(tradeData));
-            showNotification('✅ NFT предложение создано!');
-            
-            // Очищаем форму
-            document.getElementById('nftName').value = '';
-            document.getElementById('nftDesc').value = '';
-            document.getElementById('nftImage').value = '';
-            document.getElementById('nftPrice').value = '';
-            
-            setTimeout(() => showMainMenu(), 2000);
-        }
-        
-        function loadTradesList() {
-            const container = document.getElementById('tradesContainer');
-            container.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
-                <h3 style="margin-bottom: 8px;">Загрузка сделок...</h3>
-                <p style="color: var(--gray);">Получаем список активных предложений</p>
-            `;
-            
-            // Симуляция загрузки сделок
-            setTimeout(() => {
-                const trades = [
-                    { id: 1, name: "Красный дракон", desc: "Уникальный NFT дракона", price: 0.5, seller: "EQ...123" },
-                    { id: 2, name: "Синий океан", desc: "Красивый морской пейзаж", price: 0.3, seller: "EQ...456" },
-                    { id: 3, name: "Зеленый лес", desc: "Загадочный лесной NFT", price: 0.8, seller: "EQ...789" }
-                ];
-                
-                let html = '<h3 style="margin-bottom: 16px;">Активные предложения</h3>';
-                trades.forEach(trade => {
-                    html += `
-                        <div class="nft-card">
-                            <div class="nft-name">${trade.name}</div>
-                            <div style="color: var(--gray); font-size: 14px; margin-bottom: 8px;">${trade.desc}</div>
-                            <div class="nft-price">${trade.price} TON</div>
-                            <button class="btn btn-primary" style="margin-top: 12px; padding: 8px 16px;" 
-                                    onclick="showBuySection(${trade.id})">
-                                🛒 Купить
-                            </button>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-            }, 1000);
-        }
-        
-        function loadMyTrades() {
-            const container = document.getElementById('myTradesContainer');
-            container.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                <h3 style="margin-bottom: 8px;">Загрузка...</h3>
-                <p style="color: var(--gray);">Получаем историю ваших сделок</p>
-            `;
-            
-            // Симуляция загрузки
-            setTimeout(() => {
-                container.innerHTML = `
-                    <h3 style="margin-bottom: 16px;">Ваши сделки</h3>
-                    <div style="background: #F2F2F7; padding: 20px; border-radius: 12px;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-                        <h4 style="margin-bottom: 8px;">Сделок пока нет</h4>
-                        <p style="color: var(--gray);">Создайте ваше первое предложение NFT!</p>
-                    </div>
-                `;
-            }, 1000);
-        }
-        
-        function showBuySection(tradeId) {
-            if (!isWalletConnected) {
-                showNotification('❌ Сначала подключите кошелек');
-                showSection('walletSection');
-                return;
-            }
-            
-            // Здесь будет информация о конкретном NFT
-            document.getElementById('buyNftInfo').innerHTML = `
-                <h3>Подтверждение покупки</h3>
-                <p>NFT #${tradeId}</p>
-                <p>Цена: 0.5 TON</p>
-                <div style="background: #E8F4FD; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 14px;">
-                    💡 <strong>Важно:</strong> TON будет переведен напрямую на кошелек продавца
-                </div>
-            `;
-            
-            showSection('buySection');
-        }
-        
-        function confirmPurchase() {
-            showNotification('✅ Запрос на покупку отправлен');
-            setTimeout(() => {
-                showSection('tradesList');
-            }, 2000);
-        }
-        
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = message;
-            notification.style.background = message.includes('❌') ? '#FF3B30' : 
-                                          message.includes('✅') ? '#34C759' : 
-                                          message.includes('🔄') ? '#FF9500' : '#007AFF';
-            notification.style.color = 'white';
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-        
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            initWalletState();
-            showNotification('💎 Добро пожаловать в децентрализованный NFT Trade Bot!');
-        });
-    </script>
-</body>
-</html>
+            //     console

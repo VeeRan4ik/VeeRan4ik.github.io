@@ -978,9 +978,18 @@
             
             // В реальном приложении здесь будет запрос к TON API
              try {
-                const response = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${walletAddress}`);
-                const data = await response.json();
-                walletBalance = parseInt(data.result) / 1000000000; // Конвертация наноТОН в TON
-                updateWalletUI();
-            } catch (error) {
-                console}
+    const response = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${walletAddress}`);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    walletBalance = parseInt(data.result) / 1000000000; // Конвертация наноТОН в TON
+    updateWalletUI();
+} catch (error) {
+    console.error('Ошибка при получении баланса:', error);
+    // Дополнительная обработка ошибки, например:
+    // walletBalance = 0;
+    // updateWalletUI();
+}

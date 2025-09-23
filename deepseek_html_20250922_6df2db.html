@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>NFT Trade Bot - Real TON</title>
+    <title>NFT Trade Bot - Connect TON Wallet</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/tonweb/dist/tonweb.js"></script>
     <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -23,6 +24,7 @@
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
             --gradient-success: linear-gradient(135deg, #34C759 0%, #4CD964 100%);
+            --gradient-wallet: linear-gradient(135deg, #0088CC 0%, #00A3FF 100%);
         }
         
         * {
@@ -102,6 +104,11 @@
             color: white;
         }
         
+        .btn-wallet {
+            background: var(--gradient-wallet);
+            color: white;
+        }
+        
         .btn-outline {
             background: transparent;
             color: white;
@@ -166,7 +173,7 @@
             margin: 10px 0;
         }
         
-        .deposit-address {
+        .wallet-info {
             background: #F2F2F7;
             padding: 16px;
             border-radius: var(--border-radius-sm);
@@ -174,6 +181,7 @@
             word-break: break-all;
             font-family: monospace;
             font-size: 14px;
+            border-left: 4px solid var(--primary);
         }
         
         .feature-grid {
@@ -232,6 +240,54 @@
             from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
+        
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            margin: 16px 0;
+            color: white;
+        }
+        
+        .status-connected {
+            background: rgba(52, 199, 89, 0.2);
+            border-left: 4px solid var(--success);
+        }
+        
+        .status-disconnected {
+            background: rgba(255, 59, 48, 0.2);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .nft-card {
+            border: 2px solid #E5E5EA;
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            margin: 12px 0;
+            background: white;
+        }
+        
+        .nft-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .nft-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 20px;
+        }
+        
+        .wallet-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
     </style>
 </head>
 <body>
@@ -240,115 +296,104 @@
         <div id="mainMenu" class="section active">
             <div class="app-header">
                 <h1 class="app-title">💎 NFT Trade Bot</h1>
-                <p class="app-subtitle">Реальные TON транзакции</p>
+                <p class="app-subtitle">P2P сделки с TON кошельком</p>
+            </div>
+            
+            <div id="walletStatus" class="wallet-status status-disconnected">
+                <div style="font-size: 24px;">🔴</div>
+                <div>
+                    <div style="font-weight: 600;">Кошелек не подключен</div>
+                    <div style="font-size: 14px; opacity: 0.8;">Подключите TON кошелек для торговли</div>
+                </div>
             </div>
             
             <div class="card">
-                <button class="btn btn-primary" onclick="showSection('depositSection')">
-                    💰 Пополнить баланс
+                <button class="btn btn-wallet" onclick="showSection('walletSection')">
+                    👛 Подключить кошелек
                 </button>
                 
-                <button class="btn btn-success" onclick="showSection('withdrawSection')">
-                    📤 Вывести TON
-                </button>
-                
-                <button class="btn btn-outline" onclick="showSection('createForm')">
+                <button class="btn btn-primary" onclick="showSection('createForm')" id="createTradeBtn" disabled>
                     🎨 Создать NFT
                 </button>
                 
-                <button class="btn btn-outline" onclick="showSection('tradesList')">
+                <button class="btn btn-success" onclick="showSection('tradesList')" id="viewTradesBtn" disabled>
                     📋 Активные сделки
+                </button>
+                
+                <button class="btn btn-outline" onclick="showSection('myTrades')" id="myTradesBtn" disabled>
+                    📊 Мои сделки
                 </button>
             </div>
             
             <div class="feature-grid">
                 <div class="feature-item">
-                    <div class="feature-icon">⚡</div>
-                    <div>Реальные TON</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🔒</div>
-                    <div>Безопасно</div>
+                    <div class="feature-icon">🔗</div>
+                    <div>P2P сделки</div>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">💎</div>
-                    <div>Минимум 0.1 TON</div>
+                    <div>Настоящий TON</div>
                 </div>
                 <div class="feature-item">
-                    <div class="feature-icon">🚀</div>
-                    <div>Быстро</div>
+                    <div class="feature-icon">⚡</div>
+                    <div>Прямые переводы</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div>Ваши средства</div>
                 </div>
             </div>
         </div>
         
-        <!-- Пополнение баланса -->
-        <div id="depositSection" class="section">
+        <!-- Подключение кошелька -->
+        <div id="walletSection" class="section">
             <div class="app-header">
-                <h1 class="app-title">💰 Пополнение</h1>
-                <p class="app-subtitle">Отправьте TON на ваш адрес</p>
+                <h1 class="app-title">👛 TON Кошелек</h1>
+                <p class="app-subtitle">Подключите ваш кошелек</p>
             </div>
             
             <div class="card">
-                <div class="balance-display">
-                    <div>Ваш баланс</div>
-                    <div class="balance-amount" id="currentBalance">0 TON</div>
+                <div id="walletInfo" class="hidden">
+                    <div class="balance-display">
+                        <div>Баланс кошелька</div>
+                        <div class="balance-amount" id="walletBalance">0 TON</div>
+                        <div style="font-size: 14px; opacity: 0.9;" id="walletAddress"></div>
+                    </div>
+                    
+                    <div class="wallet-actions">
+                        <button class="btn btn-outline" onclick="refreshBalance()">
+                            🔄 Обновить
+                        </button>
+                        <button class="btn btn-outline" onclick="disconnectWallet()">
+                            🔗 Отключить
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Адрес для пополнения:</label>
-                    <div class="deposit-address" id="depositAddress">
-                        Загрузка...
+                <div id="walletConnect" class="hidden">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">👛</div>
+                        <h3 style="margin-bottom: 8px;">Подключите TON кошелек</h3>
+                        <p style="color: var(--gray); margin-bottom: 20px;">
+                            Выберите предпочитаемый кошелек для подключения
+                        </p>
                     </div>
-                    <button class="btn btn-outline" onclick="copyDepositAddress()">
-                        📋 Скопировать адрес
+                    
+                    <button class="btn btn-wallet" onclick="connectWallet('tonkeeper')">
+                        <img src="https://tonkeeper.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
+                        Tonkeeper
+                    </button>
+                    
+                    <button class="btn btn-wallet" onclick="connectWallet('tonhub')">
+                        <img src="https://tonhub.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
+                        Tonhub
+                    </button>
+                    
+                    <button class="btn btn-wallet" onclick="connectWallet('mytonwallet')">
+                        <img src="https://mytonwallet.com/favicon.ico" width="24" height="24" style="border-radius: 6px;">
+                        MyTonWallet
                     </button>
                 </div>
-                
-                <button class="btn btn-success" onclick="checkDepositStatus()">
-                    🔄 Проверить пополнение
-                </button>
-            </div>
-            
-            <button class="back-button" onclick="showMainMenu()">
-                ← Назад
-            </button>
-        </div>
-        
-        <!-- Вывод средств -->
-        <div id="withdrawSection" class="section">
-            <div class="app-header">
-                <h1 class="app-title">📤 Вывод TON</h1>
-                <p class="app-subtitle">Выведите средства на свой кошелек</p>
-            </div>
-            
-            <div class="card">
-                <div class="balance-display">
-                    <div>Доступно для вывода</div>
-                    <div class="balance-amount" id="withdrawBalance">0 TON</div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Сумма вывода (TON):</label>
-                    <input type="number" id="withdrawAmount" class="form-input" 
-                           placeholder="0.1" step="0.001" min="0.1">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Адрес кошелька:</label>
-                    <input type="text" id="withdrawAddress" class="form-input" 
-                           placeholder="EQ...">
-                </div>
-                
-                <div class="form-group">
-                    <div style="background: #FFF3CD; padding: 12px; border-radius: 8px; font-size: 14px;">
-                        💡 <strong>Комиссия:</strong> 0.5%<br>
-                        💎 <strong>Минимум:</strong> 0.1 TON
-                    </div>
-                </div>
-                
-                <button class="btn btn-primary" onclick="processWithdraw()">
-                    📤 Заказать вывод
-                </button>
             </div>
             
             <button class="back-button" onclick="showMainMenu()">
@@ -375,8 +420,17 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">Ссылка на изображение (URL):</label>
+                    <input type="url" id="nftImage" class="form-input" placeholder="https://example.com/image.jpg">
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">Цена в TON (мин. 0.1):</label>
                     <input type="number" id="nftPrice" class="form-input" placeholder="0.1" step="0.001" min="0.1">
+                </div>
+                
+                <div id="createTradeInfo" style="background: #E8F4FD; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 14px;">
+                    💡 <strong>Важно:</strong> Покупатель будет переводить TON напрямую на ваш кошелек
                 </div>
                 
                 <button class="btn btn-primary" onclick="createTrade()">
@@ -389,11 +443,11 @@
             </button>
         </div>
         
-        <!-- Список сделок -->
+        <!-- Активные сделки -->
         <div id="tradesList" class="section">
             <div class="app-header">
-                <h1 class="app-title">📋 Сделки</h1>
-                <p class="app-subtitle">Активные предложения</p>
+                <h1 class="app-title">📋 Активные сделки</h1>
+                <p class="app-subtitle">Выберите NFT для покупки</p>
             </div>
             
             <div class="card">
@@ -408,31 +462,217 @@
                 ← Назад
             </button>
         </div>
+        
+        <!-- Мои сделки -->
+        <div id="myTrades" class="section">
+            <div class="app-header">
+                <h1 class="app-title">📊 Мои сделки</h1>
+                <p class="app-subtitle">История ваших операций</p>
+            </div>
+            
+            <div class="card">
+                <div id="myTradesContainer" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <h3 style="margin-bottom: 8px;">Ваши сделки</h3>
+                    <p style="color: var(--gray);">Здесь будет отображаться история ваших сделок</p>
+                </div>
+            </div>
+            
+            <button class="back-button" onclick="showMainMenu()">
+                ← Назад
+            </button>
+        </div>
+        
+        <!-- Покупка NFT -->
+        <div id="buySection" class="section">
+            <div class="app-header">
+                <h1 class="app-title">🛒 Покупка NFT</h1>
+                <p class="app-subtitle">Подтвердите покупку</p>
+            </div>
+            
+            <div class="card">
+                <div id="buyNftInfo">
+                    <!-- Информация о покупаемом NFT -->
+                </div>
+                
+                <button class="btn btn-success" onclick="confirmPurchase()">
+                    ✅ Подтвердить покупку
+                </button>
+                
+                <button class="btn btn-outline" onclick="showSection('tradesList')">
+                    ❌ Отмена
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        let userBalance = 0;
-        let depositAddress = '';
+        let userWallet = null;
+        let walletBalance = 0;
+        let walletAddress = '';
+        let isWalletConnected = false;
         
         tg.expand();
         tg.MainButton.setText("Главное меню").onClick(showMainMenu).show();
         tg.setHeaderColor('#007AFF');
         tg.setBackgroundColor('#007AFF');
         
-        // Загрузка данных пользователя
-        async function loadUserData() {
-            // Симуляция загрузки данных
-            userBalance = 0.0;
-            depositAddress = 'EQ' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            
-            updateBalanceDisplay();
+        // Инициализация состояния кошелька
+        function initWalletState() {
+            const savedWallet = localStorage.getItem('tonWallet');
+            if (savedWallet) {
+                try {
+                    userWallet = JSON.parse(savedWallet);
+                    walletAddress = userWallet.address;
+                    isWalletConnected = true;
+                    updateWalletUI();
+                    loadWalletBalance();
+                } catch (e) {
+                    console.error('Error loading wallet:', e);
+                    disconnectWallet();
+                }
+            }
+            updateMainMenu();
         }
         
-        function updateBalanceDisplay() {
-            document.getElementById('currentBalance').textContent = userBalance.toFixed(4) + ' TON';
-            document.getElementById('withdrawBalance').textContent = userBalance.toFixed(4) + ' TON';
-            document.getElementById('depositAddress').textContent = depositAddress;
+        function updateMainMenu() {
+            const walletStatus = document.getElementById('walletStatus');
+            const createBtn = document.getElementById('createTradeBtn');
+            const viewTradesBtn = document.getElementById('viewTradesBtn');
+            const myTradesBtn = document.getElementById('myTradesBtn');
+            
+            if (isWalletConnected) {
+                walletStatus.innerHTML = `
+                    <div style="font-size: 24px;">🟢</div>
+                    <div>
+                        <div style="font-weight: 600;">Кошелек подключен</div>
+                        <div style="font-size: 14px; opacity: 0.8;">${walletAddress.substring(0, 8)}...${walletAddress.substring(walletAddress.length - 8)}</div>
+                    </div>
+                `;
+                walletStatus.className = 'wallet-status status-connected';
+                
+                createBtn.disabled = false;
+                viewTradesBtn.disabled = false;
+                myTradesBtn.disabled = false;
+            } else {
+                walletStatus.innerHTML = `
+                    <div style="font-size: 24px;">🔴</div>
+                    <div>
+                        <div style="font-weight: 600;">Кошелек не подключен</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Подключите TON кошелек для торговли</div>
+                    </div>
+                `;
+                walletStatus.className = 'wallet-status status-disconnected';
+                
+                createBtn.disabled = true;
+                viewTradesBtn.disabled = true;
+                myTradesBtn.disabled = true;
+            }
+        }
+        
+        function updateWalletUI() {
+            const walletInfo = document.getElementById('walletInfo');
+            const walletConnect = document.getElementById('walletConnect');
+            
+            if (isWalletConnected) {
+                walletInfo.classList.remove('hidden');
+                walletConnect.classList.add('hidden');
+                document.getElementById('walletBalance').textContent = walletBalance.toFixed(4) + ' TON';
+                document.getElementById('walletAddress').textContent = walletAddress;
+            } else {
+                walletInfo.classList.add('hidden');
+                walletConnect.classList.remove('hidden');
+            }
+        }
+        
+        async function connectWallet(walletType) {
+            showNotification('🔗 Подключаем кошелек...');
+            
+            // Симуляция подключения кошелька
+            setTimeout(() => {
+                // Генерируем тестовый кошелек (в реальном приложении здесь будет TonConnect)
+                userWallet = {
+                    type: walletType,
+                    address: 'EQ' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+                    name: getWalletName(walletType)
+                };
+                
+                walletAddress = userWallet.address;
+                isWalletConnected = true;
+                
+                // Сохраняем в localStorage
+                localStorage.setItem('tonWallet', JSON.stringify(userWallet));
+                
+                // Отправляем данные в бота
+                const walletData = {
+                    type: 'wallet_connected',
+                    wallet_address: walletAddress,
+                    wallet_type: walletType,
+                    wallet_name: userWallet.name,
+                    public_key: 'demo_public_key_' + Math.random().toString(36),
+                    proof: 'demo_proof_' + Math.random().toString(36)
+                };
+                
+                tg.sendData(JSON.stringify(walletData));
+                
+                updateWalletUI();
+                updateMainMenu();
+                loadWalletBalance();
+                showNotification('✅ Кошелек успешно подключен!');
+                
+                // Показываем информацию о кошельке
+                showSection('walletSection');
+            }, 1500);
+        }
+        
+        function getWalletName(type) {
+            const names = {
+                'tonkeeper': 'Tonkeeper',
+                'tonhub': 'Tonhub',
+                'mytonwallet': 'MyTonWallet'
+            };
+            return names[type] || 'TON Wallet';
+        }
+        
+        async function loadWalletBalance() {
+            if (!isWalletConnected) return;
+            
+            // Симуляция загрузки баланса
+            walletBalance = Math.random() * 10 + 0.1; // Случайный баланс от 0.1 до 10.1 TON
+            updateWalletUI();
+            
+            // В реальном приложении здесь будет запрос к TON API
+            // try {
+            //     const response = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${walletAddress}`);
+            //     const data = await response.json();
+            //     walletBalance = parseInt(data.result) / 1000000000; // Конвертация наноТОН в TON
+            //     updateWalletUI();
+            // } catch (error) {
+            //     console.error('Error loading balance:', error);
+            //     showNotification('❌ Ошибка загрузки баланса');
+            // }
+        }
+        
+        function refreshBalance() {
+            showNotification('🔄 Обновляем баланс...');
+            loadWalletBalance();
+            setTimeout(() => {
+                showNotification('✅ Баланс обновлен');
+            }, 1000);
+        }
+        
+        function disconnectWallet() {
+            userWallet = null;
+            walletBalance = 0;
+            walletAddress = '';
+            isWalletConnected = false;
+            
+            localStorage.removeItem('tonWallet');
+            
+            updateWalletUI();
+            updateMainMenu();
+            showNotification('🔗 Кошелек отключен');
         }
         
         function showSection(sectionId) {
@@ -440,64 +680,28 @@
                 section.classList.remove('active');
             });
             document.getElementById(sectionId).classList.add('active');
+            
+            if (sectionId === 'tradesList') {
+                loadTradesList();
+            } else if (sectionId === 'myTrades') {
+                loadMyTrades();
+            }
         }
         
         function showMainMenu() {
             showSection('mainMenu');
         }
         
-        function copyDepositAddress() {
-            navigator.clipboard.writeText(depositAddress).then(() => {
-                showNotification('✅ Адрес скопирован в буфер обмена');
-            });
-        }
-        
-        function checkDepositStatus() {
-            showNotification('🔄 Проверяем транзакции...');
-            // Здесь будет реальная проверка транзакций
-            setTimeout(() => {
-                showNotification('💎 Баланс обновляется автоматически');
-            }, 2000);
-        }
-        
-        function processWithdraw() {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            const address = document.getElementById('withdrawAddress').value.trim();
-            
-            if (!amount || amount < 0.1) {
-                showNotification('❌ Минимальная сумма вывода: 0.1 TON');
-                return;
-            }
-            
-            if (amount > userBalance) {
-                showNotification('❌ Недостаточно средств');
-                return;
-            }
-            
-            if (!address || !address.startsWith('EQ')) {
-                showNotification('❌ Введите корректный адрес кошелька');
-                return;
-            }
-            
-            const withdrawData = {
-                type: 'withdraw_request',
-                amount: amount,
-                wallet_address: address
-            };
-            
-            tg.sendData(JSON.stringify(withdrawData));
-            showNotification('✅ Запрос на вывод отправлен');
-            
-            // Очищаем форму
-            document.getElementById('withdrawAmount').value = '';
-            document.getElementById('withdrawAddress').value = '';
-            
-            setTimeout(() => showMainMenu(), 2000);
-        }
-        
         function createTrade() {
+            if (!isWalletConnected) {
+                showNotification('❌ Сначала подключите кошелек');
+                showSection('walletSection');
+                return;
+            }
+            
             const name = document.getElementById('nftName').value.trim();
             const desc = document.getElementById('nftDesc').value.trim();
+            const image = document.getElementById('nftImage').value.trim();
             const price = parseFloat(document.getElementById('nftPrice').value);
             
             if (!name || !price) {
@@ -510,8 +714,8 @@
                 return;
             }
             
-            if (price > userBalance) {
-                showNotification('❌ Недостаточно средств');
+            if (price > walletBalance) {
+                showNotification('❌ Недостаточно средств на кошельке');
                 return;
             }
             
@@ -519,18 +723,104 @@
                 type: 'create_trade',
                 nft_name: name,
                 nft_description: desc,
-                price: price
+                nft_image_url: image,
+                price: price,
+                wallet_address: walletAddress
             };
             
             tg.sendData(JSON.stringify(tradeData));
-            showNotification('✅ NFT предложение создано');
+            showNotification('✅ NFT предложение создано!');
             
             // Очищаем форму
             document.getElementById('nftName').value = '';
             document.getElementById('nftDesc').value = '';
+            document.getElementById('nftImage').value = '';
             document.getElementById('nftPrice').value = '';
             
             setTimeout(() => showMainMenu(), 2000);
+        }
+        
+        function loadTradesList() {
+            const container = document.getElementById('tradesContainer');
+            container.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                <h3 style="margin-bottom: 8px;">Загрузка сделок...</h3>
+                <p style="color: var(--gray);">Получаем список активных предложений</p>
+            `;
+            
+            // Симуляция загрузки сделок
+            setTimeout(() => {
+                const trades = [
+                    { id: 1, name: "Красный дракон", desc: "Уникальный NFT дракона", price: 0.5, seller: "EQ...123" },
+                    { id: 2, name: "Синий океан", desc: "Красивый морской пейзаж", price: 0.3, seller: "EQ...456" },
+                    { id: 3, name: "Зеленый лес", desc: "Загадочный лесной NFT", price: 0.8, seller: "EQ...789" }
+                ];
+                
+                let html = '<h3 style="margin-bottom: 16px;">Активные предложения</h3>';
+                trades.forEach(trade => {
+                    html += `
+                        <div class="nft-card">
+                            <div class="nft-name">${trade.name}</div>
+                            <div style="color: var(--gray); font-size: 14px; margin-bottom: 8px;">${trade.desc}</div>
+                            <div class="nft-price">${trade.price} TON</div>
+                            <button class="btn btn-primary" style="margin-top: 12px; padding: 8px 16px;" 
+                                    onclick="showBuySection(${trade.id})">
+                                🛒 Купить
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }, 1000);
+        }
+        
+        function loadMyTrades() {
+            const container = document.getElementById('myTradesContainer');
+            container.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <h3 style="margin-bottom: 8px;">Загрузка...</h3>
+                <p style="color: var(--gray);">Получаем историю ваших сделок</p>
+            `;
+            
+            // Симуляция загрузки
+            setTimeout(() => {
+                container.innerHTML = `
+                    <h3 style="margin-bottom: 16px;">Ваши сделки</h3>
+                    <div style="background: #F2F2F7; padding: 20px; border-radius: 12px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                        <h4 style="margin-bottom: 8px;">Сделок пока нет</h4>
+                        <p style="color: var(--gray);">Создайте ваше первое предложение NFT!</p>
+                    </div>
+                `;
+            }, 1000);
+        }
+        
+        function showBuySection(tradeId) {
+            if (!isWalletConnected) {
+                showNotification('❌ Сначала подключите кошелек');
+                showSection('walletSection');
+                return;
+            }
+            
+            // Здесь будет информация о конкретном NFT
+            document.getElementById('buyNftInfo').innerHTML = `
+                <h3>Подтверждение покупки</h3>
+                <p>NFT #${tradeId}</p>
+                <p>Цена: 0.5 TON</p>
+                <div style="background: #E8F4FD; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 14px;">
+                    💡 <strong>Важно:</strong> TON будет переведен напрямую на кошелек продавца
+                </div>
+            `;
+            
+            showSection('buySection');
+        }
+        
+        function confirmPurchase() {
+            showNotification('✅ Запрос на покупку отправлен');
+            setTimeout(() => {
+                showSection('tradesList');
+            }, 2000);
         }
         
         function showNotification(message) {
@@ -538,7 +828,8 @@
             notification.className = 'notification';
             notification.textContent = message;
             notification.style.background = message.includes('❌') ? '#FF3B30' : 
-                                          message.includes('✅') ? '#34C759' : '#007AFF';
+                                          message.includes('✅') ? '#34C759' : 
+                                          message.includes('🔄') ? '#FF9500' : '#007AFF';
             notification.style.color = 'white';
             
             document.body.appendChild(notification);
@@ -550,8 +841,8 @@
         
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            loadUserData();
-            showNotification('💎 Добро пожаловать в NFT Trade Bot!');
+            initWalletState();
+            showNotification('💎 Добро пожаловать в децентрализованный NFT Trade Bot!');
         });
     </script>
 </body>
